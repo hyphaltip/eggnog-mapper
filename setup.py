@@ -13,7 +13,7 @@ CLASSIFIERS= [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3.6 ",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Software Development :: Libraries :: Python Modules",
     ]
