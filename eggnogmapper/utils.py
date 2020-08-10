@@ -20,8 +20,8 @@
 ## More info at http://etetoolkit.org. Contact: huerta@embl.de
 ##
 # #END_LICENSE#############################################################
-from __future__ import absolute_import
-from __future__ import print_function
+
+
 
 import sys
 import os
@@ -115,7 +115,7 @@ def print_table(items, header=None, wrap=True, max_col_width=20,
     else:
         c2maxw = {i: min(max_col_width, max([safelen(str(e[i])) for e in items]))
                         for i in range(len(items[0]))}
-        
+
     if header:
         current_item = -1
         row = header
@@ -133,7 +133,7 @@ def print_table(items, header=None, wrap=True, max_col_width=20,
         print("-" *table_width)
         print(title.center(table_width))
         print("-" *table_width)
-        
+
     while row:
         is_extra = False
         values = []
@@ -179,13 +179,14 @@ def print_table(items, header=None, wrap=True, max_col_width=20,
 def ask_filename(text):
     fname = ""
     while not os.path.exists(fname):
-        fname = input(text)
+        fname = eval(input(text))
     return fname
 
-def ask(string, valid_values=None, default=-1, case_sensitive=False, color='green'):    
+def ask(string, valid_values=None, default=-1, case_sensitive=False, color='green'):
     """ Asks for a keyborad answer """
     if not valid_values:
         valid_values = ['y', 'n']
+
     v = None
     if not case_sensitive:
         valid_values = [value.lower() for value in valid_values]
@@ -206,4 +207,3 @@ def timeit(f):
         print("    ", f.__name__, time.time() - t1, "seconds")
         return r
     return a_wrapper_accepting_arguments
-

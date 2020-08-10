@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 from collections import Counter, defaultdict
 import sqlite3
 import re
@@ -28,7 +28,7 @@ def get_ogs_annotations(ognames):
     # KEGG_freq TEXT,
     # SMART_freq TEXT,
     # proteins TEXT);
-    query = ','.join(map(lambda x: '"%s"'%x, ognames))
+    query = ','.join(['"%s"'%x for x in ognames])
     cmd = 'SELECT og.og, description, COG_categories FROM og WHERE og.og IN (%s)' % query
     og2desc = {}
     if db.execute(cmd):
@@ -38,7 +38,7 @@ def get_ogs_annotations(ognames):
     return og2desc
 
 def get_best_og_description(ognames):
-    query = ','.join(map(lambda x: '"%s"'%x.split('@')[0], ognames))
+    query = ','.join(['"%s"'%x.split('@')[0] for x in ognames])
     cmd = 'SELECT og.og, nm, description, COG_categories FROM og WHERE og.og IN (%s)' % query
     best = [None, '', '']
     if db.execute(cmd):
@@ -57,7 +57,7 @@ def parse_gos(gos, target_go_ev, excluded_go_ev):
     for g in gos.strip().split(','):
         if not g:
             continue
-        gocat, gid, gevidence = map(str, g.strip().split('|'))
+        gocat, gid, gevidence = list(map(str, g.strip().split('|')))
         if not target_go_ev or gevidence in target_go_ev:
             if not excluded_go_ev or gevidence not in excluded_go_ev:
                 selected_gos.add(gid)
@@ -90,7 +90,7 @@ def summarize_annotations(seq_names, target_go_ev, excluded_go_ev):
             elif h == 'Preferred_name':
                 annotations[h].update([fields[i].strip()])
             else:
-                values = map(lambda x: str(x).strip(), fields[i].split(','))
+                values = [str(x).strip() for x in fields[i].split(',')]
                 annotations[h].update(values)
 
     for h in annotations:
@@ -104,7 +104,7 @@ def summarize_annotations(seq_names, target_go_ev, excluded_go_ev):
             else:
                 freq =  0
         except:
-            print annotations
+            print(annotations)
             raise 
         if freq >= 2:
             annotations['Preferred_name'] = [name_candidate]
@@ -120,13 +120,13 @@ def get_member_ogs(name):
     match = db.fetchone()
     ogs = None
     if match:
-        ogs = map(lambda x: str(x).strip(), match[0].split(','))
+        ogs = [str(x).strip() for x in match[0].split(',')]
     return ogs
 
 def get_member_orthologs(member, target_taxa=None, target_levels=None):
     query_taxa = member.split('.', 1)[0]
     if target_taxa:
-        target_taxa = map(str, target_taxa)
+        target_taxa = list(map(str, target_taxa))
 
     target_members = set([member])
     cmd = 'SELECT orthoindex FROM orthologs WHERE name = "%s"' % member.strip()
@@ -134,7 +134,7 @@ def get_member_orthologs(member, target_taxa=None, target_levels=None):
     event_indexes = str(db.fetchone()[0])
     cmd2 = 'SELECT level, side1, side2 FROM event WHERE i IN (%s)' % event_indexes
     if target_levels:
-        cmd2 += " AND level IN (%s)" % (','.join(map(lambda x: '"%s"' %x, target_levels)))
+        cmd2 += " AND level IN (%s)" % (','.join(['"%s"' %x for x in target_levels]))
     db.execute(cmd2)
     orthology = {}
     for level, _side1, _side2 in db.fetchall():
@@ -153,9 +153,9 @@ def get_member_orthologs(member, target_taxa=None, target_levels=None):
 
 
         # merge by side1 coorthologs
-        targets = target_taxa or by_sp2.keys()
+        targets = target_taxa or list(by_sp2.keys())
 
-        for sp1, co1 in by_sp1.iteritems():
+        for sp1, co1 in by_sp1.items():
             if target_members & co1:
                 key1 = (sp1, tuple(sorted((co1))))
                 
@@ -167,8 +167,8 @@ def get_member_orthologs(member, target_taxa=None, target_levels=None):
                     orthology.setdefault(key1, set()).add(key2)
 
         # merge by side2 coorthologs
-        targets = target_taxa or by_sp1.keys()
-        for sp1, co1 in by_sp2.iteritems():
+        targets = target_taxa or list(by_sp1.keys())
+        for sp1, co1 in by_sp2.items():
             if target_members & co1:
                 key1 = (sp1, tuple(sorted((co1))))
                 for sp2 in targets:
@@ -187,7 +187,7 @@ def get_member_orthologs(member, target_taxa=None, target_levels=None):
         "all": set(),
     }
 
-    for k, v in orthology.iteritems():
+    for k, v in orthology.items():
         if len(k[1]) == 1:
             otype_prefix = "one2"
         else:
@@ -237,7 +237,7 @@ def get_by_member_annotations(names, target_go_ev, excluded_go_ev):
     by_member = {n:[set(), set(), None] for n in names}
     for name, pname, gos, kegg, in db.fetchall():
         selected_gos = parse_gos(gos, target_go_ev, excluded_go_ev)
-        keggs = set(map(lambda x: str(x).strip(), kegg.strip().split(',')))
+        keggs = set([str(x).strip() for x in kegg.strip().split(',')])
         by_member[str(name)] = [selected_gos, keggs, str(pname)]
     return by_member
 
@@ -262,7 +262,7 @@ def get_annotated_orthologs(target_members, orthotype, excluded_gos, cpu):
     name2index = defaultdict(set)
     event_indexes = set()
     for name, index in db.fetchall():
-        indexes = map(int, index.split(','))
+        indexes = list(map(int, index.split(',')))
         name2index[name].update(indexes)
         event_indexes.update(indexes)
 
@@ -293,14 +293,14 @@ def get_annotated_orthologs(target_members, orthotype, excluded_gos, cpu):
     cmd3 = 'SELECT name, pname, go, kegg FROM member WHERE name in (%s);' % in_clause
     t1 = time.time()
     db.execute(cmd3)
-    print time.time() - t1
+    print(time.time() - t1)
     functions = {e[0]: e[1:] for e in db.fetchall()}
-    print time.time() - t1
+    print(time.time() - t1)
 
     #print len(all_orthologs), list(all_orthologs)[:10], in_clause[:10]
     #print len([b for a,b in functions.iteritems() if b[0] ])
     annotations = {}
-    for m, orthologs in m2or.iteritems():
+    for m, orthologs in m2or.items():
         all_gos = set()
         all_kegg = set()
         all_pnames = Counter()
@@ -308,7 +308,7 @@ def get_annotated_orthologs(target_members, orthotype, excluded_gos, cpu):
             pname, gos, kegg = functions.get(o, ['', '', ''])
             all_gos.update([g.split('|')[1] for g in gos.strip().split(
                 ',') if g and g.split('|')[2] not in excluded_gos])
-            all_kegg.update(map(lambda x: str(x).strip(), kegg.strip().split(',')))
+            all_kegg.update([str(x).strip() for x in kegg.strip().split(',')])
             all_pnames.update([pname.strip()])
             del all_pnames['']
             all_kegg.discard('')
@@ -335,8 +335,8 @@ def build_orthologs(target_members, events, target_taxa=None):
                     _sp.setdefault(t, set()).add(mid)
 
         # merge by side1 coorthologs
-        targets = target_taxa or by_sp2.keys()
-        for sp1, co1 in by_sp1.iteritems():
+        targets = target_taxa or list(by_sp2.keys())
+        for sp1, co1 in by_sp1.items():
             if target_members & co1:
                 key1 = (sp1, tuple(sorted((co1))))
                 for sp2 in targets:
@@ -347,8 +347,8 @@ def build_orthologs(target_members, events, target_taxa=None):
                     orthology.setdefault(key1, set()).add(key2)
 
         # merge by side2 coorthologs
-        targets = target_taxa or by_sp1.keys()
-        for sp1, co1 in by_sp2.iteritems():
+        targets = target_taxa or list(by_sp1.keys())
+        for sp1, co1 in by_sp2.items():
             if target_members & co1:
                 key1 = (sp1, tuple(sorted((co1))))
                 for sp2 in targets:
@@ -366,7 +366,7 @@ def build_orthologs(target_members, events, target_taxa=None):
         "all": set(),
     }
 
-    for k, v in orthology.iteritems():
+    for k, v in orthology.items():
         if len(k[1]) == 1:
             otype_prefix = "one2"
         else:
